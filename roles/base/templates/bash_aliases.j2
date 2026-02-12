@@ -1,0 +1,40 @@
+# FSXSYSTEM Custom Aliases
+
+# Docker aliases
+alias dps='docker ps'
+alias dpsa='docker ps -a'
+alias di='docker images'
+alias dlog='docker logs -f'
+alias dstop='docker stop $(docker ps -q)'
+alias dprune='docker system prune -af'
+alias dc='docker-compose'
+alias dcup='docker-compose up -d'
+alias dcdown='docker-compose down'
+alias dclogs='docker-compose logs -f'
+
+# System aliases
+alias ll='ls -alh'
+alias la='ls -A'
+alias l='ls -CF'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias update='sudo apt update && sudo apt upgrade -y'
+alias ports='netstat -tulanp'
+alias meminfo='free -h'
+alias diskinfo='df -h'
+alias sysinfo='htop'
+
+# Git aliases
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log --oneline'
+
+# Navigation
+alias cdapps='cd /opt/docker-apps'
+alias cdlogs='cd /var/log'
+
+# Ansible
+alias ap='ansible-playbook'
+alias aping='ansible all -m ping'

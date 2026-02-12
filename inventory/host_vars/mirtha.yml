@@ -1,0 +1,32 @@
+---
+# Host-specific variables for mirtha
+
+# Hardware specs
+cpu_cores: 2
+memory_gb: 2
+disk_size_gb: 30
+
+# Network
+primary_interface: eth0
+static_ip: 10.0.0.73
+
+# Docker configuration
+docker_enabled: true
+docker_compose_version: "2.24.5"
+docker_users:
+  - fsxserver
+
+# Services to deploy
+deploy_portainer: true
+deploy_watchtower: true
+deploy_monitoring: false  # Disabled due to low RAM
+
+# Backup configuration
+backup_enabled: true
+backup_destination: "/mnt/backup"
+
+# Custom packages for this host
+additional_packages:
+  - ncdu
+  - tree
+  - tmux

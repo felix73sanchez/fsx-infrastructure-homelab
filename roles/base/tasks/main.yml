@@ -1,0 +1,115 @@
+---
+# Base system configuration
+
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+  tags: ['hostname']
+
+- name: Update /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_default_ipv4.address }} {{ inventory_hostname }}"
+    state: present
+  tags: ['hostname']
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+  tags: ['timezone']
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  tags: ['packages']
+
+- name: Upgrade existing packages
+  apt:
+    upgrade: dist
+    autoremove: yes
+    autoclean: yes
+  tags: ['packages', 'upgrade']
+
+- name: Install base packages
+  apt:
+    name: "{{ base_packages }}"
+    state: present
+    update_cache: yes
+  tags: ['packages']
+
+- name: Install host-specific packages
+  apt:
+    name: "{{ additional_packages }}"
+    state: present
+  when: additional_packages is defined
+  tags: ['packages']
+
+- name: Configure unattended upgrades
+  apt:
+    name: unattended-upgrades
+    state: present
+  when: enable_unattended_upgrades | default(false)
+  tags: ['auto-update']
+
+- name: Enable automatic updates
+  template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    mode: '0644'
+  when: enable_unattended_upgrades | default(false)
+  notify: restart unattended-upgrades
+  tags: ['auto-update']
+
+- name: Configure NTP
+  apt:
+    name: systemd-timesyncd
+    state: present
+  tags: ['ntp']
+
+- name: Set NTP servers
+  template:
+    src: timesyncd.conf.j2
+    dest: /etc/systemd/timesyncd.conf
+    mode: '0644'
+  notify: restart timesyncd
+  tags: ['ntp']
+
+- name: Create admin user groups
+  user:
+    name: "{{ admin_user }}"
+    groups: "{{ admin_groups }}"
+    append: yes
+  tags: ['users']
+
+- name: Set up bash aliases
+  template:
+    src: bash_aliases.j2
+    dest: "/home/{{ admin_user }}/.bash_aliases"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: '0644'
+  tags: ['shell']
+
+- name: Optimize system limits
+  pam_limits:
+    domain: '*'
+    limit_type: '-'
+    limit_item: "{{ item.limit }}"
+    value: "{{ item.value }}"
+  loop:
+    - { limit: 'nofile', value: '65536' }
+    - { limit: 'nproc', value: '65536' }
+  tags: ['tuning']
+
+- name: Configure sysctl for performance
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { key: 'vm.swappiness', value: '10' }
+    - { key: 'net.core.somaxconn', value: '65535' }
+    - { key: 'net.ipv4.tcp_max_syn_backlog', value: '8192' }
+  tags: ['tuning']

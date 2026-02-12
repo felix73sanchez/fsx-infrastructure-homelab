@@ -1,0 +1,54 @@
+---
+# Custom MOTD configuration
+
+- name: Disable default MOTD scripts
+  file:
+    path: "/etc/update-motd.d/{{ item }}"
+    mode: '0644'
+  loop:
+    - 10-help-text
+    - 50-motd-news
+    - 50-landscape-sysinfo
+  ignore_errors: yes
+  tags: ['cleanup']
+
+- name: Create custom MOTD directory
+  file:
+    path: /etc/update-motd.d
+    state: directory
+    mode: '0755'
+  tags: ['setup']
+
+- name: Deploy custom MOTD script
+  template:
+    src: 00-fsxsystem-banner.j2
+    dest: /etc/update-motd.d/00-fsxsystem-banner
+    mode: '0755'
+  tags: ['banner']
+
+- name: Deploy system info MOTD script
+  template:
+    src: 10-system-info.j2
+    dest: /etc/update-motd.d/10-system-info
+    mode: '0755'
+  when: motd_show_system_info | default(true)
+  tags: ['info']
+
+- name: Deploy Docker info MOTD script
+  template:
+    src: 20-docker-info.j2
+    dest: /etc/update-motd.d/20-docker-info
+    mode: '0755'
+  when: docker_install | default(true)
+  tags: ['docker']
+
+- name: Clear old MOTD
+  file:
+    path: /etc/motd
+    state: absent
+  tags: ['cleanup']
+
+- name: Run update-motd to generate new MOTD
+  command: run-parts /etc/update-motd.d/
+  changed_when: false
+  tags: ['generate']

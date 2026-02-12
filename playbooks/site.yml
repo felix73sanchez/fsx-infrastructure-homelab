@@ -1,0 +1,53 @@
+---
+- name: FSXSYSTEM HomeLab - Complete Infrastructure Deployment
+  hosts: homelab
+  become: true
+  
+  pre_tasks:
+    - name: Display deployment information
+      debug:
+        msg: |
+          ========================================
+          FSXSYSTEM Infrastructure Deployment
+          ========================================
+          Host: {{ inventory_hostname }}
+          Environment: {{ environment }}
+          Timestamp: {{ ansible_date_time.iso8601 }}
+          ========================================
+      tags: always
+      
+    - name: Wait for system to be ready
+      wait_for_connection:
+        timeout: 300
+      tags: always
+
+  roles:
+    - role: base
+      tags: ['base', 'system']
+      
+    - role: security
+      tags: ['security', 'hardening']
+      
+    - role: docker
+      tags: ['docker', 'containers']
+      when: docker_install | default(true)
+      
+    - role: monitoring
+      tags: ['monitoring', 'observability']
+      when: monitoring_enabled | default(false)
+      
+    - role: motd
+      tags: ['motd', 'branding']
+      
+  post_tasks:
+    - name: Deployment summary
+      debug:
+        msg: |
+          ========================================
+          Deployment Completed Successfully
+          ========================================
+          Host: {{ inventory_hostname }}
+          Uptime: {{ ansible_uptime_seconds }}s
+          Docker: {{ 'Installed' if docker_install else 'Skipped' }}
+          ========================================
+      tags: always

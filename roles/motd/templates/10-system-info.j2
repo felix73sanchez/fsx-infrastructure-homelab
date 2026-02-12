@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# System info
+HOSTNAME=$(hostname)
+UPTIME=$(uptime -p | sed 's/up //')
+MEMORY=$(free -h | awk '/^Mem:/ {printf "%s / %s (%.0f%%)", $3, $2, ($3/$2)*100}')
+DISK=$(df -h / | awk 'NR==2 {printf "%s / %s (%s)", $3, $2, $5}')
+CPU_LOAD=$(cat /proc/loadavg | awk '{print $1, $2, $3}')
+IP=$(hostname -I | awk '{print $1}')
+PROCESSES=$(ps aux | wc -l)
+
+echo "  📊 System Information:"
+echo "  ────────────────────────────────────────────────────────────────────"
+printf "  ${BLUE}%-15s${NC} : %s\n" "Hostname" "$HOSTNAME"
+printf "  ${BLUE}%-15s${NC} : %s\n" "IP Address" "$IP"
+printf "  ${GREEN}%-15s${NC} : %s\n" "Uptime" "$UPTIME"
+printf "  ${YELLOW}%-15s${NC} : %s\n" "Memory Usage" "$MEMORY"
+printf "  ${YELLOW}%-15s${NC} : %s\n" "Disk Usage" "$DISK"
+printf "  ${BLUE}%-15s${NC} : %s\n" "CPU Load (1/5/15)" "$CPU_LOAD"
+printf "  ${BLUE}%-15s${NC} : %s\n" "Processes" "$PROCESSES"
+echo ""

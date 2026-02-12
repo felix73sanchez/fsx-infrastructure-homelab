@@ -1,0 +1,123 @@
+---
+# Docker installation and configuration
+
+- name: Remove old Docker versions
+  apt:
+    name:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+    state: absent
+  tags: ['install']
+
+- name: Install prerequisites for Docker
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: yes
+  tags: ['install']
+
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  tags: ['install']
+
+- name: Add Docker repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+    update_cache: yes
+  tags: ['install']
+
+- name: Install Docker CE
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: "{{ docker_package_state }}"
+    update_cache: yes
+  tags: ['install']
+
+- name: Ensure Docker service is running
+  service:
+    name: docker
+    state: "{{ docker_service_state }}"
+    enabled: "{{ docker_service_enabled }}"
+  tags: ['service']
+
+- name: Add users to docker group
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: yes
+  loop: "{{ docker_users }}"
+  when: docker_users is defined
+  tags: ['users']
+
+- name: Create Docker daemon configuration
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    mode: '0644'
+  notify: restart docker
+  tags: ['config']
+
+- name: Create docker directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/docker
+    - /opt/docker-apps
+  tags: ['directories']
+
+- name: Install Docker Compose standalone
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-linux-x86_64"
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+  when: docker_compose_version is defined
+  tags: ['compose']
+
+- name: Configure Docker log rotation
+  template:
+    src: docker-logrotate.j2
+    dest: /etc/logrotate.d/docker
+    mode: '0644'
+  tags: ['logging']
+
+- name: Install ctop (container monitoring)
+  get_url:
+    url: https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-amd64
+    dest: /usr/local/bin/ctop
+    mode: '0755'
+  tags: ['tools']
+
+- name: Set up Docker network for containers
+  community.docker.docker_network:
+    name: fsxnet
+    driver: bridge
+    ipam_config:
+      - subnet: "{{ docker_network_subnet }}"
+  tags: ['network']
+
+- name: Enable Docker system prune cron job
+  cron:
+    name: "Docker system prune"
+    minute: "0"
+    hour: "3"
+    job: "/usr/bin/docker system prune -af --volumes > /dev/null 2>&1"
+    user: root
+  tags: ['maintenance']

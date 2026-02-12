@@ -1,0 +1,133 @@
+---
+# Security hardening tasks
+
+- name: Configure SSH - Disable root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin {{ ssh_permit_root_login }}'
+    state: present
+  notify: restart sshd
+  tags: ['ssh']
+
+- name: Configure SSH - Disable password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication {{ ssh_password_authentication }}'
+    state: present
+  notify: restart sshd
+  tags: ['ssh']
+
+- name: Configure SSH - Enable pubkey authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PubkeyAuthentication'
+    line: 'PubkeyAuthentication {{ ssh_pubkey_authentication }}'
+    state: present
+  notify: restart sshd
+  tags: ['ssh']
+
+- name: Configure SSH - Disable empty passwords
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitEmptyPasswords'
+    line: 'PermitEmptyPasswords no'
+    state: present
+  notify: restart sshd
+  tags: ['ssh']
+
+- name: Configure SSH - Set client alive interval
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?ClientAliveInterval'
+    line: 'ClientAliveInterval 300'
+    state: present
+  notify: restart sshd
+  tags: ['ssh']
+
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+  when: enable_ufw | default(true)
+  tags: ['firewall']
+
+- name: Configure UFW defaults
+  ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: 'incoming', policy: 'deny' }
+    - { direction: 'outgoing', policy: 'allow' }
+  when: enable_ufw | default(true)
+  tags: ['firewall']
+
+- name: Allow SSH through firewall
+  ufw:
+    rule: allow
+    port: "{{ ssh_port }}"
+    proto: tcp
+  when: enable_ufw | default(true)
+  tags: ['firewall']
+
+- name: Allow additional TCP ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ firewall_allowed_tcp_ports }}"
+  when: 
+    - enable_ufw | default(true)
+    - firewall_allowed_tcp_ports is defined
+  tags: ['firewall']
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+  when: enable_ufw | default(true)
+  tags: ['firewall']
+
+- name: Install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+  when: enable_fail2ban | default(true)
+  tags: ['fail2ban']
+
+- name: Configure fail2ban for SSH
+  template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    mode: '0644'
+  when: enable_fail2ban | default(true)
+  notify: restart fail2ban
+  tags: ['fail2ban']
+
+- name: Start and enable fail2ban
+  service:
+    name: fail2ban
+    state: started
+    enabled: yes
+  when: enable_fail2ban | default(true)
+  tags: ['fail2ban']
+
+- name: Disable unnecessary services
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  loop:
+    - bluetooth
+    - cups
+  ignore_errors: yes
+  tags: ['services']
+
+- name: Set secure permissions on sensitive files
+  file:
+    path: "{{ item }}"
+    mode: '0600'
+  loop:
+    - /etc/ssh/sshd_config
+    - /etc/shadow
+  tags: ['permissions']

@@ -1,0 +1,61 @@
+---
+- name: Deploy Docker Applications
+  hosts: homelab
+  become: true
+  
+  vars:
+    docker_apps_dir: "/opt/docker-apps"
+    
+  tasks:
+    - name: Create docker apps directory
+      file:
+        path: "{{ docker_apps_dir }}/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - portainer
+        - watchtower
+        - traefik
+      tags: ['setup']
+      
+    - name: Deploy Portainer
+      community.docker.docker_container:
+        name: portainer
+        image: portainer/portainer-ce:latest
+        state: started
+        restart_policy: always
+        ports:
+          - "9000:9000"
+          - "9443:9443"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - portainer_data:/data
+      when: deploy_portainer | default(true)
+      tags: ['portainer']
+      
+    - name: Deploy Watchtower (auto-update containers)
+      community.docker.docker_container:
+        name: watchtower
+        image: containrrr/watchtower:latest
+        state: started
+        restart_policy: always
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+        env:
+          WATCHTOWER_CLEANUP: "true"
+          WATCHTOWER_SCHEDULE: "0 0 4 * * *"  # 4 AM daily
+      when: deploy_watchtower | default(true)
+      tags: ['watchtower']
+      
+    - name: Create docker-compose file for app stack
+      template:
+        src: docker-compose.yml.j2
+        dest: "{{ docker_apps_dir }}/docker-compose.yml"
+        mode: '0644'
+      tags: ['compose']
+      
+    - name: Deploy applications using docker-compose
+      community.docker.docker_compose:
+        project_src: "{{ docker_apps_dir }}"
+        state: present
+      tags: ['compose']

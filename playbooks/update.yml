@@ -1,0 +1,51 @@
+---
+- name: System Updates
+  hosts: homelab
+  become: true
+  
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: ['update']
+      
+    - name: Check for available updates
+      shell: apt list --upgradable | wc -l
+      register: updates_available
+      changed_when: false
+      tags: ['check']
+      
+    - name: Display available updates
+      debug:
+        msg: "{{ updates_available.stdout }} packages can be upgraded"
+      tags: ['check']
+      
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+      tags: ['upgrade']
+      register: upgrade_result
+      
+    - name: Check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+      tags: ['always']
+      
+    - name: Notify if reboot needed
+      debug:
+        msg: "WARNING: System reboot is required!"
+      when: reboot_required.stat.exists
+      tags: ['always']
+      
+    - name: Reboot system if needed (optional)
+      reboot:
+        msg: "Rebooting due to system updates"
+        reboot_timeout: 300
+      when: 
+        - reboot_required.stat.exists
+        - auto_reboot | default(false)
+      tags: ['reboot']

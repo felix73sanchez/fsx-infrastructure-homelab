@@ -1,0 +1,43 @@
+---
+# Monitoring role - lightweight for low-resource systems
+
+- name: Install monitoring tools
+  apt:
+    name:
+      - glances
+      - iotop
+      - nethogs
+    state: present
+  tags: ['install']
+
+- name: Install node_exporter for Prometheus (optional)
+  get_url:
+    url: https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz
+    dest: /tmp/node_exporter.tar.gz
+  when: monitoring_enabled | default(false)
+  tags: ['prometheus']
+
+- name: Extract node_exporter
+  unarchive:
+    src: /tmp/node_exporter.tar.gz
+    dest: /opt/
+    remote_src: yes
+  when: monitoring_enabled | default(false)
+  tags: ['prometheus']
+
+- name: Create systemd service for node_exporter
+  template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    mode: '0644'
+  when: monitoring_enabled | default(false)
+  notify: restart node_exporter
+  tags: ['prometheus']
+
+- name: Enable and start node_exporter
+  service:
+    name: node_exporter
+    state: started
+    enabled: yes
+  when: monitoring_enabled | default(false)
+  tags: ['prometheus']
