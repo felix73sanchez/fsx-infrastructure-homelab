@@ -1,122 +1,122 @@
-# FSXSYSTEM Infrastructure as Code
+# FSXSYSTEM Infraestructura como Código
 
-Ansible-based infrastructure management for FSXSYSTEM homelab.
+Gestión de infraestructura basada en Ansible para el laboratorio FSXSYSTEM.
 
-## 🏗️ Architecture
+## 🏗️ Arquitectura
 
-- **Current Setup**: 1 Ubuntu Server (mirtha) - 30GB disk, 2GB RAM
-- **Future Ready**: Designed to scale with multiple clusters and nodes
+- **Configuración Actual**: 1 Servidor Ubuntu (mirtha) - 30GB disco, 2GB RAM
+- **Preparado para el Futuro**: Diseñado para escalar con múltiples clústeres y nodos
 
-## 📁 Structure
+## 📁 Estructura
 
 ```
 fsx-infra/
-├── ansible.cfg              # Ansible configuration
-├── inventory/               # Inventory files
-│   ├── hosts.yml           # Main inventory
-│   └── host_vars/          # Per-host variables
-├── group_vars/             # Group variables
-│   ├── all.yml            # Global variables
-│   └── homelab.yml        # Homelab-specific vars
-├── roles/                  # Ansible roles
-├── playbooks/             # Playbooks separated by function
-├── templates/             # Jinja2 templates
-└── requirements.yml       # External role dependencies
+├── ansible.cfg              # Configuración de Ansible
+├── inventory/               # Archivos de inventario
+│   ├── hosts.yml           # Inventario principal
+│   └── host_vars/          # Variables por host
+├── group_vars/             # Variables de grupo
+│   ├── all.yml            # Variables globales
+│   └── homelab.yml        # Variables específicas del homelab
+├── roles/                  # Roles de Ansible
+├── playbooks/             # Playbooks separados por función
+├── templates/             # Plantillas Jinja2
+└── requirements.yml       # Dependencias de roles externos
 ```
 
-## 🚀 Quick Start
+## 🚀 Inicio Rápido
 
-### Initial Setup
+### Configuración Inicial
 ```bash
-# Install Ansible
+# Instalar Ansible
 sudo apt update && sudo apt install -y ansible
 
-# Clone repository
-git clone <your-repo> fsx-infra
+# Clonar repositorio
+git clone <tu-repo> fsx-infra
 cd fsx-infra
 
-# Install dependencies (if any)
+# Instalar dependencias (si las hay)
 ansible-galaxy install -r requirements.yml
 
-# Test connectivity
+# Probar conectividad
 ansible homelab -m ping
 ```
 
-### Deploy Full Stack
+### Desplegar Stack Completo
 ```bash
-# Deploy everything
+# Desplegar todo
 ansible-playbook playbooks/site.yml
 
-# Deploy specific role
+# Desplegar rol específico
 ansible-playbook playbooks/site.yml --tags docker
 
-# Deploy to specific host
+# Desplegar en host específico
 ansible-playbook playbooks/site.yml --limit mirtha
 ```
 
-## 📋 Available Playbooks
+## 📋 Playbooks Disponibles
 
-- `site.yml` - Complete infrastructure deployment
-- `provision.yml` - Initial server provisioning
-- `update.yml` - System updates only
-- `docker-apps.yml` - Deploy Docker applications
-- `backup.yml` - Backup configuration
+- `site.yml` - Despliegue completo de infraestructura
+- `provision.yml` - Aprovisionamiento inicial del servidor
+- `update.yml` - Solo actualizaciones del sistema
+- `docker-apps.yml` - Desplegar aplicaciones Docker
+- `backup.yml` - Configuración de copias de seguridad
 
-## 🔧 Configuration
+## 🔧 Configuración
 
-Edit variables in:
-- `group_vars/all.yml` - Global settings
-- `group_vars/homelab.yml` - Homelab-specific
-- `inventory/host_vars/mirtha.yml` - Host-specific
+Editar variables en:
+- `group_vars/all.yml` - Configuración global
+- `group_vars/homelab.yml` - Específico del homelab
+- `inventory/host_vars/mirtha.yml` - Específico del host
 
-## 📦 Installed Components
+## 📦 Componentes Instalados
 
-- Base system packages (vim, curl, git, htop, etc.)
-- Docker & Docker Compose
-- Security hardening (UFW, SSH config, fail2ban)
-- Monitoring tools (optional)
-- Custom MOTD
+- Paquetes base del sistema (vim, curl, git, htop, etc.)
+- Docker y Docker Compose
+- Endurecimiento de seguridad (UFW, configuración SSH, fail2ban)
+- Herramientas de monitoreo (opcional)
+- MOTD personalizado
 
-## 🔐 Security Features
+## 🔐 Características de Seguridad
 
-- SSH hardening (no root login, key-based auth)
-- UFW firewall configured
-- Fail2ban for brute-force protection
-- Automatic security updates
-- Audit logging
+- Endurecimiento SSH (sin acceso root, autenticación por clave)
+- Cortafuegos UFW configurado
+- Fail2ban para protección contra ataques de fuerza bruta
+- Actualizaciones de seguridad automáticas
+- Registro de auditoría
 
-## 📊 Monitoring
+## 📊 Monitoreo
 
-- System monitoring with htop/glances
-- Docker container monitoring
-- Log aggregation (optional)
+- Monitoreo del sistema con htop/glances
+- Monitoreo de contenedores Docker
+- Agregación de registros (opcional)
 
-## 🛠️ Maintenance
+## 🛠️ Mantenimiento
 
 ```bash
-# Update all systems
+# Actualizar todos los sistemas
 ansible-playbook playbooks/update.yml
 
-# Check system status
+# Verificar estado del sistema
 ansible homelab -m shell -a "df -h && free -h"
 
-# Restart services
+# Reiniciar servicios
 ansible-playbook playbooks/site.yml --tags docker --skip-tags install
 ```
 
-## 🔄 Adding New Nodes
+## 🔄 Agregar Nuevos Nodos
 
-1. Add host to `inventory/hosts.yml`
-2. Create host-specific vars in `inventory/host_vars/<hostname>.yml`
-3. Run: `ansible-playbook playbooks/provision.yml --limit <hostname>`
+1. Añadir host a `inventory/hosts.yml`
+2. Crear variables específicas del host en `inventory/host_vars/<hostname>.yml`
+3. Ejecutar: `ansible-playbook playbooks/provision.yml --limit <hostname>`
 
-## 📝 Notes
+## 📝 Notas
 
-- All passwords stored in Ansible Vault (encrypted)
-- Idempotent playbooks - safe to run multiple times
-- Tagged tasks for selective deployment
-- Handlers for service restarts only when needed
+- Todas las contraseñas almacenadas en Ansible Vault (encriptadas)
+- Playbooks idempotentes - seguros para ejecutar múltiples veces
+- Tareas etiquetadas para despliegue selectivo
+- Manejadores para reinicio de servicios solo cuando sea necesario
 
-## 🤝 Contributing
+## 🤝 Contribuir
 
-Document all changes and test before deploying to production nodes.
+Documenta todos los cambios y prueba antes de desplegar en nodos de producción.
