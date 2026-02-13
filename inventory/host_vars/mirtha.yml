@@ -17,9 +17,9 @@ docker_users:
   - fsxserver
 
 # Services to deploy
-deploy_portainer: true
-deploy_watchtower: true
-deploy_monitoring: false  # Disabled due to low RAM
+  #deploy_portainer: false
+  #deploy_watchtower: false
+  #deploy_monitoring: false  # Disabled due to low RAM
 
 # Backup configuration
 backup_enabled: true
