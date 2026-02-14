@@ -76,6 +76,13 @@
   tags: ['ntp']
 
 - name: Create admin user groups
+  group:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ admin_groups }}"
+  tags: ['users']
+
+- name: Add admin user to groups
   user:
     name: "{{ admin_user }}"
     groups: "{{ admin_groups }}"

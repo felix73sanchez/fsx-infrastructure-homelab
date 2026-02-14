@@ -10,8 +10,8 @@ NC='\033[0m' # No Color
 # System info
 HOSTNAME=$(hostname)
 UPTIME=$(uptime -p | sed 's/up //')
-MEMORY=$(free -h | awk '/^Mem:/ {printf "%s / %s (%.0f%%)", $3, $2, ($3/$2)*100}')
-DISK=$(df -h / | awk 'NR==2 {printf "%s / %s (%s)", $3, $2, $5}')
+MEMORY=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
+DISK=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')
 CPU_LOAD=$(cat /proc/loadavg | awk '{print $1, $2, $3}')
 IP=$(hostname -I | awk '{print $1}')
 PROCESSES=$(ps aux | wc -l)
