@@ -118,3 +118,16 @@ ansible-playbook playbooks/site.yml --tags docker --skip-tags install
 ## 🤝 Contribuir
 
 Documenta todos los cambios y prueba antes de desplegar en nodos de producción.
+
+## 📜 Licencia
+
+Este proyecto está licenciado bajo la **GNU General Public License v3.0** - Ver el archivo [LICENSE](LICENSE) para más detalles.
+
+Esto significa que:
+- ✅ Puedes usar, modificar y distribuir este código libremente
+- ✅ Si lo usas comercialmente, debes compartir el código fuente
+- ✅ Las modificaciones también deben estar bajo GPL-3.0
+
+Autor: Felix Sanchez - FSX
+
+Software libre construido para aportar valor a la comunidad.
