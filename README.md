@@ -57,10 +57,8 @@ ansible-playbook playbooks/site.yml --limit mirtha
 ## 📋 Playbooks Disponibles
 
 - `site.yml` - Despliegue completo de infraestructura
-- `provision.yml` - Aprovisionamiento inicial del servidor
 - `update.yml` - Solo actualizaciones del sistema
 - `docker-apps.yml` - Desplegar aplicaciones Docker
-- `backup.yml` - Configuración de copias de seguridad
 
 ## 🔧 Configuración
 
@@ -108,7 +106,7 @@ ansible-playbook playbooks/site.yml --tags docker --skip-tags install
 
 1. Añadir host a `inventory/hosts.yml`
 2. Crear variables específicas del host en `inventory/host_vars/<hostname>.yml`
-3. Ejecutar: `ansible-playbook playbooks/provision.yml --limit <hostname>`
+3. Ejecutar: `ansible-playbook playbooks/site.yml --limit <hostname>`
 
 ## 📝 Notas
 

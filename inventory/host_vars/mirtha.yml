@@ -10,20 +10,9 @@ disk_size_gb: 30
 primary_interface: eth0
 static_ip: 10.0.0.73
 
-# Docker configuration
-docker_enabled: true
-docker_compose_version: "2.24.5"
+# Docker users
 docker_users:
   - fsxserver
-
-# Services to deploy
-  #deploy_portainer: false
-  #deploy_watchtower: false
-  #deploy_monitoring: false  # Disabled due to low RAM
-
-# Backup configuration
-backup_enabled: true
-backup_destination: "/mnt/backup"
 
 # Custom packages for this host
 additional_packages:

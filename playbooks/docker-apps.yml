@@ -15,7 +15,6 @@
       loop:
         - portainer
         - watchtower
-        - traefik
       tags: ['setup']
       
     - name: Deploy Portainer
@@ -46,16 +45,3 @@
           WATCHTOWER_SCHEDULE: "0 0 4 * * *"  # 4 AM daily
       when: deploy_watchtower | default(true)
       tags: ['watchtower']
-      
-    - name: Create docker-compose file for app stack
-      template:
-        src: docker-compose.yml.j2
-        dest: "{{ docker_apps_dir }}/docker-compose.yml"
-        mode: '0644'
-      tags: ['compose']
-      
-    - name: Deploy applications using docker-compose
-      community.docker.docker_compose:
-        project_src: "{{ docker_apps_dir }}"
-        state: present
-      tags: ['compose']

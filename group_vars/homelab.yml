@@ -1,13 +1,6 @@
 ---
 # Homelab-specific variables
 
-# Network configuration
-homelab_network: "10.0.0.0/24"
-homelab_gateway: "10.0.0.1"
-homelab_dns_servers:
-  - 1.1.1.1
-  - 8.8.8.8
-
 # Docker network
 docker_network_subnet: "172.20.0.0/16"
 
@@ -15,18 +8,3 @@ docker_network_subnet: "172.20.0.0/16"
 ntp_servers:
   - 0.pool.ntp.org
   - 1.pool.ntp.org
-
-# Environment-specific settings
-environment: homelab
-log_level: info
-
-# Docker registry (optional - for future use)
-# private_registry: registry.homelab.local:5000
-
-# Backup settings
-backup_enabled: true
-backup_schedule: "0 2 * * *"  # 2 AM daily
-
-# Resource limits for Docker containers
-default_container_memory_limit: "512m"
-default_container_cpu_limit: "1"
