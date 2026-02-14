@@ -1,15 +1,15 @@
-# FSXSYSTEM Infrastructure - Setup Guide
+# FSXSYSTEM Infraestructura - Guía de Configuración
 
-## Prerequisites
+## Requisitos Previos
 
-- Ansible 2.9+ installed on control machine
-- SSH access to all target hosts
-- SSH key-based authentication configured
-- Sudo access on target hosts
+- Ansible 2.9+ instalado en la máquina de control
+- Acceso SSH a todos los hosts objetivo
+- Autenticación basada en clave SSH configurada
+- Acceso sudo en los hosts objetivo
 
-## Initial Setup
+## Configuración Inicial
 
-### 1. Install Ansible (on control machine)
+### 1. Instalar Ansible (en la máquina de control)
 
 ```bash
 # Ubuntu/Debian
@@ -19,37 +19,37 @@ sudo apt install -y ansible
 # macOS
 brew install ansible
 
-# Verify installation
+# Verificar instalación
 ansible --version
 ```
 
-### 2. Configure SSH Keys
+### 2. Configurar Claves SSH
 
 ```bash
-# Generate SSH key if you don't have one
-ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+# Generar clave SSH si no tienes una
+ssh-keygen -t rsa -b 4096 -C "tu_email@ejemplo.com"
 
-# Copy key to target host
+# Copiar clave al host objetivo
 ssh-copy-id fsxserver@10.0.0.73
 
-# Test connection
+# Probar conexión
 ssh fsxserver@10.0.0.73
 ```
 
-### 3. Clone and Setup Repository
+### 3. Clonar y Configurar Repositorio
 
 ```bash
-# Clone repository
-git clone <your-repo-url> fsx-infra
+# Clonar repositorio
+git clone <url-de-repositorio> fsx-infra
 cd fsx-infra
 
-# Install Ansible dependencies
+# Instalar dependencias de Ansible
 ansible-galaxy install -r requirements.yml
 ```
 
-### 4. Configure Inventory
+### 4. Configurar Inventario
 
-Edit `inventory/hosts.yml` to match your environment:
+Editar `inventory/hosts.yml` para que coincida con tu ambiente:
 
 ```yaml
 all:
@@ -60,125 +60,125 @@ all:
           ansible_host: 10.0.0.73
 ```
 
-### 5. Test Connectivity
+### 5. Probar Conectividad
 
 ```bash
-# Test ping
+# Probar ping
 ansible homelab -m ping
 
-# Or use Makefile
+# O usar Makefile
 make ping
 ```
 
-## Deployment
+## Despliegue
 
-### Quick Deployment
+### Despliegue Rápido
 
-Use the interactive deployment script:
+Usa el script de despliegue interactivo:
 
 ```bash
 ./deploy.sh
 ```
 
-### Manual Deployment
+### Despliegue Manual
 
 ```bash
-# Full deployment
+# Despliegue completo
 ansible-playbook playbooks/site.yml
 
-# Deploy to specific host
+# Desplegar en host específico
 ansible-playbook playbooks/site.yml --limit mirtha
 
-# Deploy specific role
+# Desplegar rol específico
 ansible-playbook playbooks/site.yml --tags docker
 
-# Skip specific role
+# Saltar rol específico
 ansible-playbook playbooks/site.yml --skip-tags monitoring
 
-# Dry run (check mode)
+# Verificación (modo check)
 ansible-playbook playbooks/site.yml --check
 ```
 
-### Using Makefile
+### Usar Makefile
 
 ```bash
-make deploy          # Full deployment
-make update          # System updates only
-make docker-apps     # Deploy Docker applications
-make check           # Syntax check
+make deploy          # Despliegue completo
+make update          # Solo actualizaciones del sistema
+make docker-apps     # Desplegar aplicaciones Docker
+make check           # Verificación de sintaxis
 ```
 
-## Configuration
+## Configuración
 
-### Group Variables
+### Variables de Grupo
 
-Edit `group_vars/all.yml` for global settings:
-- Timezone
-- Base packages
-- SSH configuration
-- Security settings
+Editar `group_vars/all.yml` para configuración global:
+- Zona horaria
+- Paquetes base
+- Configuración SSH
+- Configuración de seguridad
 
-Edit `group_vars/homelab.yml` for environment-specific settings:
-- Network configuration
-- Docker settings
-- Backup configuration
+Editar `group_vars/homelab.yml` para configuración específica del ambiente:
+- Configuración de red
+- Configuración de Docker
+- Configuración de backup
 
-### Host Variables
+### Variables de Host
 
-Edit `inventory/host_vars/mirtha.yml` for host-specific settings:
-- Hardware specs
-- Custom packages
-- Service deployment flags
+Editar `inventory/host_vars/mirtha.yml` para configuración específica del host:
+- Especificaciones de hardware
+- Paquetes personalizados
+- Banderas de despliegue de servicios
 
-## Common Tasks
+## Tareas Comunes
 
-### Update Systems
+### Actualizar Sistemas
 
 ```bash
-# Update all hosts
+# Actualizar todos los hosts
 ansible-playbook playbooks/update.yml
 
-# Update specific host
+# Actualizar host específico
 ansible-playbook playbooks/update.yml --limit mirtha
 
-# With automatic reboot (if needed)
+# Con reinicio automático (si es necesario)
 ansible-playbook playbooks/update.yml -e "auto_reboot=true"
 ```
 
-### Deploy Docker Applications
+### Desplegar Aplicaciones Docker
 
 ```bash
 ansible-playbook playbooks/docker-apps.yml
 ```
 
-### Run Ad-hoc Commands
+### Ejecutar Comandos Ad-hoc
 
 ```bash
-# Check disk space
+# Verificar espacio en disco
 ansible homelab -m shell -a "df -h"
 
-# Check Docker status
+# Verificar estado de Docker
 ansible homelab -m shell -a "docker ps"
 
-# Restart Docker service
+# Reiniciar servicio Docker
 ansible homelab -m service -a "name=docker state=restarted" --become
 
-# Gather facts
+# Recopilar facts
 ansible mirtha -m setup
 ```
 
-## Adding New Hosts
+## Agregar Nuevos Hosts
 
-1. Add host to `inventory/hosts.yml`:
+1. Agregar host a `inventory/hosts.yml`:
 
 ```yaml
 homelab:
   hosts:
-    newhost:
+    nuevohost:
       ansible_host: 10.0.0.74
 ```
 
-2. Create host vars in `inventory/host_vars/newhost.yml`:
+2. Crear variables del host en `inventory/host_vars/nuevohost.yml`:
 
 ```yaml
 cpu_cores: 4
@@ -186,15 +186,15 @@ memory_gb: 8
 disk_size_gb: 100
 ```
 
-3. Deploy:
+3. Desplegar:
 
 ```bash
-ansible-playbook playbooks/site.yml --limit newhost
+ansible-playbook playbooks/site.yml --limit nuevohost
 ```
 
-## Scaling to Multiple Clusters
+## Escalado a Múltiples Clústeres
 
-The structure supports multiple clusters:
+La estructura soporta múltiples clústeres:
 
 ```yaml
 all:
@@ -217,117 +217,117 @@ all:
           ansible_host: 10.0.2.10
 ```
 
-Create environment-specific group vars:
+Crear variables de grupo específicas del ambiente:
 - `group_vars/production.yml`
 - `group_vars/staging.yml`
 
-## Troubleshooting
+## Solución de Problemas
 
-### Connection Issues
+### Problemas de Conexión
 
 ```bash
-# Verbose output
+# Salida detallada
 ansible homelab -m ping -vvv
 
-# Test SSH manually
+# Prueba SSH manual
 ssh -i ~/.ssh/id_rsa fsxserver@10.0.0.73
 
-# Check SSH config
+# Verificar configuración SSH
 cat ~/.ssh/config
 ```
 
-### Playbook Errors
+### Errores de Playbook
 
 ```bash
-# Syntax check
+# Verificación de sintaxis
 ansible-playbook playbooks/site.yml --syntax-check
 
-# Dry run
+# Verificación (modo check)
 ansible-playbook playbooks/site.yml --check
 
-# Step by step
+# Paso a paso
 ansible-playbook playbooks/site.yml --step
 
-# Start at specific task
+# Empezar en tarea específica
 ansible-playbook playbooks/site.yml --start-at-task="Install Docker"
 ```
 
-### View Facts
+### Ver Facts
 
 ```bash
-# All facts
+# Todos los facts
 ansible mirtha -m setup
 
-# Specific fact
+# Facts específicos
 ansible mirtha -m setup -a "filter=ansible_distribution*"
 ```
 
-## Security Best Practices
+## Mejores Prácticas de Seguridad
 
-### Use Ansible Vault
+### Usar Ansible Vault
 
 ```bash
-# Create vault
+# Crear vault
 ansible-vault create group_vars/vault.yml
 
-# Edit vault
+# Editar vault
 ansible-vault edit group_vars/vault.yml
 
-# Encrypt existing file
+# Encriptar archivo existente
 ansible-vault encrypt group_vars/sensitive.yml
 
-# Run playbook with vault
+# Ejecutar playbook con vault
 ansible-playbook playbooks/site.yml --ask-vault-pass
 ```
 
-### Store Vault Password
+### Almacenar Contraseña de Vault
 
 ```bash
-# Create password file
-echo "your-vault-password" > ~/.ansible_vault_pass
+# Crear archivo de contraseña
+echo "tu-contraseña-vault" > ~/.ansible_vault_pass
 chmod 600 ~/.ansible_vault_pass
 
-# Update ansible.cfg
+# Actualizar ansible.cfg
 # vault_password_file = ~/.ansible_vault_pass
 ```
 
-## Maintenance
+## Mantenimiento
 
-### Regular Updates
+### Actualizaciones Regulares
 
-Schedule regular system updates:
+Programar actualizaciones regulares del sistema:
 
 ```bash
-# Weekly updates (add to crontab)
-0 3 * * 0 cd /path/to/fsx-infra && ansible-playbook playbooks/update.yml
+# Actualizaciones semanales (agregar a crontab)
+0 3 * * 0 cd /ruta/a/fsx-infra && ansible-playbook playbooks/update.yml
 ```
 
-### Docker Cleanup
+### Limpieza de Docker
 
-Docker cleanup is automated via cron (3 AM daily). Manual cleanup:
+La limpieza de Docker se automatiza vía cron (3 AM diariamente). Limpieza manual:
 
 ```bash
 ansible homelab -m shell -a "docker system prune -af" --become
 ```
 
-### Monitoring
+### Monitoreo
 
-Access Portainer (if deployed):
-- http://mirtha-ip:9000
+Acceder a Portainer (si está desplegado):
+- http://ip-mirtha:9000
 
-Check container status:
+Verificar estado de contenedores:
 ```bash
 ansible homelab -m shell -a "docker ps"
 ```
 
-## Backup Strategy
+## Estrategia de Backup
 
-1. Infrastructure code: Version control (Git)
-2. Host configs: Managed by Ansible (reproducible)
-3. Application data: Docker volumes (manual backup)
+1. Código de infraestructura: Control de versiones (Git)
+2. Configuraciones de host: Gestionadas por Ansible (reproducibles)
+3. Datos de aplicación: Volúmenes Docker (backup manual)
 
-## Resources
+## Recursos
 
-- [Ansible Documentation](https://docs.ansible.com/)
-- [Docker Documentation](https://docs.docker.com/)
-- [Best Practices](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
+- [Documentación de Ansible](https://docs.ansible.com/)
+- [Documentación de Docker](https://docs.docker.com/)
+- [Mejores Prácticas](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)

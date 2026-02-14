@@ -1,128 +1,128 @@
-# FSXSYSTEM Infrastructure - Complete File Structure
+# FSXSYSTEM Infraestructura - Estructura Completa de Archivos
 
 ```
 fsx-infra/
-├── README.md                          # Main documentation
-├── SETUP_GUIDE.md                     # Detailed setup instructions
-├── ansible.cfg                        # Ansible configuration
-├── Makefile                           # Quick commands
-├── deploy.sh                          # Interactive deployment script
-├── requirements.yml                   # Ansible Galaxy dependencies
-├── .gitignore                        # Git ignore rules
+├── README.md                          # Documentación principal
+├── SETUP_GUIDE.md                     # Instrucciones detalladas de configuración
+├── ansible.cfg                        # Configuración de Ansible
+├── Makefile                           # Comandos rápidos
+├── deploy.sh                          # Script de despliegue interactivo
+├── requirements.yml                   # Dependencias de Ansible Galaxy
+├── .gitignore                        # Reglas de ignoración de Git
 │
-├── inventory/                         # Inventory management
-│   ├── hosts.yml                     # Main inventory file
-│   └── host_vars/                    # Per-host variables
-│       └── mirtha.yml                # Variables for mirtha host
+├── inventory/                         # Gestión de inventario
+│   ├── hosts.yml                     # Archivo de inventario principal
+│   └── host_vars/                    # Variables por host
+│       └── mirtha.yml                # Variables para el host mirtha
 │
-├── group_vars/                        # Group variables
-│   ├── all.yml                       # Global variables (all hosts)
-│   └── homelab.yml                   # Homelab environment variables
+├── group_vars/                        # Variables de grupo
+│   ├── all.yml                       # Variables globales (todos los hosts)
+│   └── homelab.yml                   # Variables del ambiente homelab
 │
-├── playbooks/                         # Ansible playbooks
-│   ├── site.yml                      # Main deployment playbook
-│   ├── update.yml                    # System updates playbook
-│   └── docker-apps.yml               # Docker applications deployment
+├── playbooks/                         # Playbooks de Ansible
+│   ├── site.yml                      # Playbook principal de despliegue
+│   ├── update.yml                    # Playbook de actualizaciones del sistema
+│   └── docker-apps.yml               # Despliegue de aplicaciones Docker
 │
-└── roles/                             # Ansible roles
-    ├── base/                          # Base system configuration
+└── roles/                             # Roles de Ansible
+    ├── base/                          # Configuración base del sistema
     │   ├── tasks/
-    │   │   └── main.yml              # System setup, packages, tuning
+    │   │   └── main.yml              # Configuración del sistema, paquetes, tuning
     │   ├── handlers/
-    │   │   └── main.yml              # Service handlers
+    │   │   └── main.yml              # Manejadores de servicios
     │   └── templates/
-    │       ├── bash_aliases.j2       # Custom bash aliases
-    │       ├── timesyncd.conf.j2     # NTP configuration
-    │       └── 50unattended-upgrades.j2  # Auto-updates config
+    │       ├── bash_aliases.j2       # Alias bash personalizados
+    │       ├── timesyncd.conf.j2     # Configuración NTP
+    │       └── 50unattended-upgrades.j2  # Configuración de auto-actualizaciones
     │
-    ├── security/                      # Security hardening
+    ├── security/                      # Endurecimiento de seguridad
     │   ├── tasks/
     │   │   └── main.yml              # SSH, firewall, fail2ban
     │   ├── handlers/
-    │   │   └── main.yml              # Security service handlers
+    │   │   └── main.yml              # Manejadores de servicios de seguridad
     │   └── templates/
-    │       └── jail.local.j2         # Fail2ban configuration
+    │       └── jail.local.j2         # Configuración de Fail2ban
     │
-    ├── docker/                        # Docker setup
+    ├── docker/                        # Configuración de Docker
     │   ├── tasks/
-    │   │   └── main.yml              # Docker installation & config
+    │   │   └── main.yml              # Instalación y configuración de Docker
     │   ├── handlers/
-    │   │   └── main.yml              # Docker service handlers
+    │   │   └── main.yml              # Manejadores de servicios Docker
     │   └── templates/
-    │       ├── daemon.json.j2        # Docker daemon config
-    │       └── docker-logrotate.j2   # Log rotation for containers
+    │       ├── daemon.json.j2        # Configuración del daemon Docker
+    │       └── docker-logrotate.j2   # Rotación de logs para contenedores
     │
-    ├── monitoring/                    # Monitoring (optional)
+    ├── monitoring/                    # Monitoreo (opcional)
     │   ├── tasks/
     │   │   └── main.yml              # Glances, node_exporter
     │   └── handlers/
-    │       └── main.yml              # Monitoring service handlers
+    │       └── main.yml              # Manejadores de servicios de monitoreo
     │
-    └── motd/                          # Message of the Day
+    └── motd/                          # Mensaje del día (MOTD)
         ├── tasks/
-        │   └── main.yml              # MOTD deployment
+        │   └── main.yml              # Despliegue de MOTD
         └── templates/
-            ├── 00-fsxsystem-banner.j2    # ASCII banner
-            ├── 10-system-info.j2         # System information
-            └── 20-docker-info.j2         # Docker container info
+            ├── 00-fsxsystem-banner.j2    # Banner ASCII
+            ├── 10-system-info.j2         # Información del sistema
+            └── 20-docker-info.j2         # Información de contenedores Docker
 ```
 
-## Key Features
+## Características Clave
 
-### ✅ Production-Ready Features
-- **Idempotent**: Safe to run multiple times
-- **Tagged Tasks**: Selective deployment with `--tags`
-- **Handlers**: Services restart only when needed
-- **Templates**: Jinja2 templating for dynamic configs
-- **Scalable**: Ready for multi-cluster expansion
-- **Documented**: Comprehensive guides and comments
+### ✅ Características Listas para Producción
+- **Idempotente**: Seguro de ejecutar múltiples veces
+- **Tareas Etiquetadas**: Despliegue selectivo con `--tags`
+- **Manejadores**: Los servicios se reinician solo cuando es necesario
+- **Templates**: Uso de plantillas Jinja2 para configuraciones dinámicas
+- **Escalable**: Preparado para expansión a múltiples clústeres
+- **Documentado**: Guías completas y comentarios detallados
 
-### 🔒 Security
-- SSH hardening (no root login, key-based auth)
-- UFW firewall with configurable rules
-- Fail2ban for brute-force protection
-- Automatic security updates (configurable)
-- Secure file permissions
+### 🔒 Seguridad
+- Endurecimiento SSH (sin acceso root, autenticación por clave)
+- Cortafuegos UFW con reglas configurables
+- Fail2ban para protección contra ataques de fuerza bruta
+- Actualizaciones de seguridad automáticas (configurables)
+- Permisos de archivo seguros
 
-### 🐳 Docker Management
-- Docker CE with Docker Compose
-- Custom network configuration
-- Log rotation
-- Automatic cleanup via cron
-- Container monitoring tools
-- User group management
+### 🐳 Gestión de Docker
+- Docker CE con Docker Compose
+- Configuración de red personalizada
+- Rotación de logs
+- Limpieza automática vía cron
+- Herramientas de monitoreo de contenedores
+- Gestión de grupos de usuarios
 
-### 📊 Monitoring & Management
-- Custom MOTD with system stats
-- Docker container status display
-- Resource monitoring tools (htop, glances, ctop)
-- Optional Prometheus node_exporter
+### 📊 Monitoreo y Gestión
+- MOTD personalizado con estadísticas del sistema
+- Visualización de estado de contenedores Docker
+- Herramientas de monitoreo de recursos (htop, glances, ctop)
+- node_exporter de Prometheus opcional
 
-### 🛠️ Developer Experience
-- Makefile for quick commands
-- Interactive deployment script
-- Bash aliases for common tasks
-- Syntax checking
-- Dry-run capability
+### 🛠️ Experiencia del Desarrollador
+- Makefile para comandos rápidos
+- Script de despliegue interactivo
+- Alias bash para tareas comunes
+- Verificación de sintaxis
+- Capacidad de dry-run
 
-### 🔄 Maintenance
-- Automated system updates
-- Docker cleanup scheduling
-- Log rotation
-- NTP synchronization
-- System tuning
+### 🔄 Mantenimiento
+- Actualizaciones automáticas del sistema
+- Programación de limpieza de Docker
+- Rotación de logs
+- Sincronización NTP
+- Tuning del sistema
 
-## File Counts
-- Total Playbooks: 3
-- Total Roles: 5
-- Total Templates: 9
-- Total Tasks Files: 5
-- Total Handler Files: 5
+## Conteo de Archivos
+- Total de Playbooks: 3
+- Total de Roles: 5
+- Total de Templates: 9
+- Total de Archivos de Tasks: 5
+- Total de Archivos de Handlers: 5
 
-## Next Steps for Expansion
+## Próximos Pasos para Expansión
 
-### Adding Kubernetes Support
-Create new group in inventory:
+### Agregar Soporte de Kubernetes
+Crear nuevo grupo en el inventario:
 ```yaml
 k8s_cluster:
   children:
@@ -136,11 +136,11 @@ k8s_cluster:
           ansible_host: 10.0.0.81
 ```
 
-### Adding Docker Swarm
-Update inventory with swarm groups and create swarm role.
+### Agregar Docker Swarm
+Actualizar el inventario con grupos de swarm y crear rol de swarm.
 
-### Adding Database Servers
-Create dedicated database role and group in inventory.
+### Agregar Servidores de Base de Datos
+Crear rol de base de datos dedicado y grupo en el inventario.
 
-### Adding Storage/NAS
-Create storage role for NFS/Samba configuration.
+### Agregar Almacenamiento/NAS
+Crear rol de almacenamiento para configuración NFS/Samba.
