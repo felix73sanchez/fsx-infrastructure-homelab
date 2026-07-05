@@ -296,7 +296,7 @@ Toda la documentación detallada está en [`docs/`](docs/):
 | [Secretos](docs/06-secretos.md) | --extra-vars, ansible-vault, mejores prácticas |
 | [Operaciones](docs/07-operaciones.md) | Día a día: updates, logs, monitoreo |
 | [Red y Firewall](docs/08-red-firewall.md) | Puertos, topología, reglas UFW |
-| [Backup](docs/09-backup.md) | Qué respaldar y cómo |
+| [Backup & Restore](docs/09-backup.md) | Qué respaldar, cómo restaurar cada servicio, restore completo desde cero |
 | [Troubleshooting](docs/10-troubleshooting.md) | Problemas comunes y soluciones |
 | [Agregar Nodos](docs/11-agregar-nodos.md) | Checklist para añadir un nuevo servidor |
 
