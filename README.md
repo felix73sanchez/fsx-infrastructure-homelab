@@ -281,3 +281,23 @@ GNU General Public License v3.0 — Ver [LICENSE](LICENSE) para más detalles.
 
 Autor: Felix Sanchez — FSX
 Software libre construido para aportar valor a la comunidad.
+
+## 📚 Documentación
+
+Toda la documentación detallada está en [`docs/`](docs/):
+
+| Documento | Qué cubre |
+|---|---|
+| [Arquitectura](docs/01-arquitectura.md) | Topología, stack, decisiones técnicas |
+| [Servicios Docker](docs/02-servicios-docker.md) | nginx, pihole, ma-tours, portfolio, qbittorrent |
+| [Playbooks](docs/03-playbooks.md) | site, docker-services, update, docker-apps |
+| [Roles](docs/04-roles.md) | base, security, samba, docker, monitoring, motd |
+| [Multi-Distro](docs/05-multidistro.md) | Debian + RedHat en un solo playbook |
+| [Secretos](docs/06-secretos.md) | --extra-vars, ansible-vault, mejores prácticas |
+| [Operaciones](docs/07-operaciones.md) | Día a día: updates, logs, monitoreo |
+| [Red y Firewall](docs/08-red-firewall.md) | Puertos, topología, reglas UFW |
+| [Backup](docs/09-backup.md) | Qué respaldar y cómo |
+| [Troubleshooting](docs/10-troubleshooting.md) | Problemas comunes y soluciones |
+| [Agregar Nodos](docs/11-agregar-nodos.md) | Checklist para añadir un nuevo servidor |
+
+Para empezar: [docs/README.md](docs/README.md)
