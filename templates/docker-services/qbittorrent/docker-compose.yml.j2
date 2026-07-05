@@ -1,0 +1,17 @@
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ={{ timezone }}
+      - WEBUI_PORT=8073
+    volumes:
+      - ./config:/config
+      - {{ qbittorrent_downloads | default('/mnt/storage/data/torrents') }}:/downloads
+    ports:
+      - "8073:8073"
+      - "6881:6881"
+      - "6881:6881/udp"
+    restart: unless-stopped

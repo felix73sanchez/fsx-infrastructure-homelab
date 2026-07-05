@@ -1,4 +1,4 @@
-.PHONY: help ping deploy update check install-deps backup
+.PHONY: help ping deploy update check install-deps backup docker-services
 
 # Default target
 help:
@@ -30,9 +30,17 @@ deploy-mirtha:
 update:
 	ansible-playbook playbooks/update.yml
 
-# Deploy Docker apps
+# Deploy Docker apps (legacy Portainer/Watchtower)
 docker-apps:
 	ansible-playbook playbooks/docker-apps.yml
+
+# Deploy Docker services (nginx, pihole, ma-tours, portfolio, qbittorrent)
+docker-services:
+	ansible-playbook playbooks/docker-services.yml
+
+# Deploy Docker services to specific host
+docker-services-mirtha:
+	ansible-playbook playbooks/docker-services.yml --limit mirtha
 
 # Syntax check
 check:

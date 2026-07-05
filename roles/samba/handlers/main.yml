@@ -1,0 +1,10 @@
+---
+- name: restart smbd
+  service:
+    name: "{{ 'smb' if ansible_os_family == 'RedHat' else 'smbd' }}"
+    state: restarted
+
+- name: restart nmbd
+  service:
+    name: "{{ 'nmb' if ansible_os_family == 'RedHat' else 'nmbd' }}"
+    state: restarted

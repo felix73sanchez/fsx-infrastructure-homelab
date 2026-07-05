@@ -1,52 +1,39 @@
 ---
-# Docker installation and configuration
+# Docker installation (multi-distro)
 
 - name: Remove old Docker versions
-  apt:
-    name:
-      - docker
-      - docker-engine
-      - docker.io
-      - containerd
-      - runc
+  package:
+    name: "{{ item }}"
     state: absent
+  loop:
+    - docker
+    - docker-engine
+    - docker.io
+    - containerd
+    - runc
+    - docker-client
+    - docker-client-latest
+    - docker-common
+    - docker-latest
+    - docker-latest-logrotate
+    - docker-logrotate
+  ignore_errors: yes
   tags: ['install']
 
-- name: Install prerequisites for Docker
-  apt:
+- name: Install prerequisites
+  package:
     name:
-      - apt-transport-https
-      - ca-certificates
       - curl
-      - gnupg
-      - lsb-release
-    state: present
-    update_cache: yes
-  tags: ['install']
-
-- name: Add Docker GPG key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
+      - ca-certificates
     state: present
   tags: ['install']
 
-- name: Add Docker repository
-  apt_repository:
-    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-    state: present
-    update_cache: yes
-  tags: ['install']
-
-- name: Install Docker CE
-  apt:
-    name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-buildx-plugin
-      - docker-compose-plugin
-    state: "{{ docker_package_state }}"
-    update_cache: yes
+- name: Install Docker via convenience script
+  shell: |
+    curl -fsSL https://get.docker.com | sh
+  args:
+    creates: /usr/bin/docker
+  notify: restart docker
   tags: ['install']
 
 - name: Ensure Docker service is running

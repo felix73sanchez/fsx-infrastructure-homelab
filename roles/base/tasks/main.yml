@@ -1,5 +1,5 @@
 ---
-# Base system configuration
+# Base system configuration (multi-distro)
 
 - name: Set hostname
   hostname:
@@ -18,61 +18,108 @@
     name: "{{ timezone }}"
   tags: ['timezone']
 
-- name: Update apt cache
+- name: Update package cache (apt)
   apt:
     update_cache: yes
     cache_valid_time: 3600
+  when: ansible_pkg_mgr == 'apt'
   tags: ['packages']
 
-- name: Upgrade existing packages
+- name: Update package cache (dnf/yum)
+  command: "{{ 'dnf' if ansible_pkg_mgr == 'dnf' else 'yum' }} makecache"
+  when: ansible_pkg_mgr in ['dnf', 'yum']
+  tags: ['packages']
+
+- name: Upgrade all packages (Debian)
   apt:
     upgrade: dist
     autoremove: yes
     autoclean: yes
+  when: ansible_pkg_mgr == 'apt'
+  tags: ['packages', 'upgrade']
+
+- name: Upgrade all packages (RedHat)
+  dnf:
+    name: "*"
+    state: latest
+  when: ansible_pkg_mgr in ['dnf', 'yum']
   tags: ['packages', 'upgrade']
 
 - name: Install base packages
-  apt:
+  package:
     name: "{{ base_packages }}"
     state: present
-    update_cache: yes
   tags: ['packages']
 
 - name: Install host-specific packages
-  apt:
+  package:
     name: "{{ additional_packages }}"
     state: present
   when: additional_packages is defined
   tags: ['packages']
 
-- name: Configure unattended upgrades
-  apt:
-    name: unattended-upgrades
-    state: present
-  when: enable_unattended_upgrades | default(false)
+- name: Configure unattended upgrades (Debian)
+  block:
+    - name: Install unattended-upgrades
+      apt:
+        name: unattended-upgrades
+        state: present
+    - name: Deploy auto-upgrade config
+      template:
+        src: 50unattended-upgrades.j2
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        mode: '0644'
+      notify: restart unattended-upgrades
+  when:
+    - ansible_os_family == 'Debian'
+    - enable_unattended_upgrades | default(false)
   tags: ['auto-update']
 
-- name: Enable automatic updates
-  template:
-    src: 50unattended-upgrades.j2
-    dest: /etc/apt/apt.conf.d/50unattended-upgrades
-    mode: '0644'
-  when: enable_unattended_upgrades | default(false)
-  notify: restart unattended-upgrades
+- name: Configure automatic updates (RedHat)
+  block:
+    - name: Install dnf-automatic
+      package:
+        name: dnf-automatic
+        state: present
+    - name: Enable dnf-automatic timer
+      systemd:
+        name: dnf-automatic.timer
+        enabled: yes
+        state: started
+  when:
+    - ansible_os_family == 'RedHat'
+    - enable_unattended_upgrades | default(false)
   tags: ['auto-update']
 
-- name: Configure NTP
-  apt:
-    name: systemd-timesyncd
-    state: present
+- name: Configure NTP (Debian — systemd-timesyncd)
+  block:
+    - name: Install systemd-timesyncd
+      package:
+        name: systemd-timesyncd
+        state: present
+    - name: Deploy timesyncd config
+      template:
+        src: timesyncd.conf.j2
+        dest: /etc/systemd/timesyncd.conf
+        mode: '0644'
+      notify: restart timesyncd
+  when: ansible_os_family == 'Debian'
   tags: ['ntp']
 
-- name: Set NTP servers
-  template:
-    src: timesyncd.conf.j2
-    dest: /etc/systemd/timesyncd.conf
-    mode: '0644'
-  notify: restart timesyncd
+- name: Configure NTP (RedHat — chrony)
+  block:
+    - name: Install chrony
+      package:
+        name: chrony
+        state: present
+    - name: Configure chrony
+      lineinfile:
+        path: /etc/chrony.conf
+        regexp: '^pool '
+        line: "pool {{ ntp_servers[0] }} iburst"
+        state: present
+      notify: restart chronyd
+  when: ansible_os_family == 'RedHat'
   tags: ['ntp']
 
 - name: Create admin user groups
@@ -97,6 +144,30 @@
     group: "{{ admin_user }}"
     mode: '0644'
   tags: ['shell']
+
+- name: Create extra system users
+  user:
+    name: "{{ item.username }}"
+    uid: "{{ item.uid | default(omit) }}"
+    group: "{{ item.group | default(omit) }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    comment: "{{ item.comment | default('') }}"
+    create_home: "{{ item.create_home | default(true) }}"
+    state: present
+  loop: "{{ extra_users }}"
+  when: extra_users is defined
+  tags: ['users']
+
+- name: Mount storage volumes
+  mount:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    fstype: "{{ item.fstype }}"
+    opts: "{{ item.opts | default('defaults,nofail') }}"
+    state: "{{ item.state | default('mounted') }}"
+  loop: "{{ storage_mounts }}"
+  when: storage_mounts is defined
+  tags: ['storage']
 
 - name: Optimize system limits
   pam_limits:

@@ -4,130 +4,280 @@ Gestión de infraestructura basada en Ansible para el laboratorio FSXSYSTEM.
 
 ## 🏗️ Arquitectura
 
-- **Configuración Actual**: 1 Servidor Ubuntu (mirtha) - 30GB disco, 2GB RAM
-- **Preparado para el Futuro**: Diseñado para escalar con múltiples clústeres y nodos
+- **Servidor Actual**: `mirtha` (10.0.0.73) — Ubuntu 24.04, 2 núcleos, 2GB RAM, 26GB LVM
+- **Preparado para el Futuro**: Diseñado para escalar con múltiples clústeres y nodos (Swarm, Kubernetes, DBs, Storage)
 
 ## 📁 Estructura
 
 ```
 fsx-infra/
-├── ansible.cfg              # Configuración de Ansible
-├── inventory/               # Archivos de inventario
-│   ├── hosts.yml           # Inventario principal
-│   └── host_vars/          # Variables por host
-├── group_vars/             # Variables de grupo
-│   ├── all.yml            # Variables globales
-│   └── homelab.yml        # Variables específicas del homelab
-├── roles/                  # Roles de Ansible
-├── playbooks/             # Playbooks separados por función
-├── templates/             # Plantillas Jinja2
-└── requirements.yml       # Dependencias de roles externos
+├── ansible.cfg                    # Configuración de Ansible
+├── deploy.sh                      # Script interactivo de despliegue
+├── Makefile                       # Atajos de comandos frecuentes
+├── requirements.yml               # Dependencias de colecciones Ansible
+├── inventory/
+│   ├── hosts.yml                  # Inventario principal (hosts, grupos)
+│   └── host_vars/
+│       └── mirtha.yml             # Variables específicas de mirtha
+├── group_vars/
+│   ├── all.yml                    # Variables globales (todas las configs)
+│   └── homelab.yml                # Variables específicas del homelab
+├── roles/
+│   ├── base/                      # Configuración base del sistema
+│   ├── security/                  # Hardening (SSH, UFW, fail2ban)
+│   ├── samba/                     # Servidor Samba (compartir archivos)
+│   ├── docker/                    # Docker Engine + Compose
+│   ├── monitoring/                # Monitoreo (glances, node_exporter)
+│   └── motd/                      # Banner personalizado FSXSYSTEM
+├── playbooks/
+│   ├── site.yml                   # Despliegue completo de infraestructura
+│   ├── update.yml                 # Actualizaciones del sistema
+│   ├── docker-apps.yml            # Apps Docker legacy (Portainer, Watchtower)
+│   └── docker-services.yml        # Servicios Docker (nginx, pihole, apps)
+├── templates/
+│   └── docker-services/           # Plantillas Jinja2 para Docker Compose
+│       ├── nginx/                 # nginx + Cloudflare Tunnel
+│       ├── pihole/                # Pi-hole DNS
+│       ├── ma-tours/              # MA Tours (api + frontend + postgres)
+│       ├── portfolio-fsx-nxt/     # Portfolio personal (Next.js)
+│       └── qbittorrent/           # Cliente torrent
+└── .atl/                          # Archivos de seguimiento (Atl)
 ```
 
 ## 🚀 Inicio Rápido
 
-### Configuración Inicial
+### Prerrequisitos
 ```bash
-# Instalar Ansible
-sudo apt update && sudo apt install -y ansible
-
-# Clonar repositorio
-git clone <tu-repo> fsx-infra
-cd fsx-infra
-
-# Instalar dependencias (si las hay)
 ansible-galaxy install -r requirements.yml
-
-# Probar conectividad
-ansible homelab -m ping
 ```
 
-### Desplegar Stack Completo
+### Despliegue Completo
 ```bash
-# Desplegar todo
-ansible-playbook playbooks/site.yml
+# 1. Infraestructura base (roles: base → security → samba → docker → motd)
+make deploy
 
-# Desplegar rol específico
-ansible-playbook playbooks/site.yml --tags docker
-
-# Desplegar en host específico
-ansible-playbook playbooks/site.yml --limit mirtha
+# 2. Servicios Docker (nginx, pihole, apps)
+make docker-services
 ```
 
-## 📋 Playbooks Disponibles
+### Usando deploy.sh
+```bash
+./deploy.sh
+# Seleccionar: 1) Full deployment, 2) Host específico, 3) Updates, etc.
+```
 
-- `site.yml` - Despliegue completo de infraestructura
-- `update.yml` - Solo actualizaciones del sistema
-- `docker-apps.yml` - Desplegar aplicaciones Docker
+### Atajos vía Makefile
+```bash
+make ping              # Probar conectividad a todos los hosts
+make deploy            # Desplegar infraestructura completa
+make deploy-mirtha     # Desplegar solo en mirtha
+make update            # Actualizar todos los sistemas
+make docker-apps       # Portainer + Watchtower
+make docker-services   # nginx + pihole + apps compose
+make install-deps      # Instalar dependencias Ansible
+make facts-mirtha      # Ver facts del host mirtha
+```
 
-## 🔧 Configuración
+## 🔄 Multi-Distro
 
-Editar variables en:
-- `group_vars/all.yml` - Configuración global
-- `group_vars/homelab.yml` - Específico del homelab
-- `inventory/host_vars/mirtha.yml` - Específico del host
+El stack soporta **Debian/Ubuntu** y **RedHat/Rocky/Alma/Fedora/CentOS**.
 
-## 📦 Componentes Instalados
+Para agregar un nodo RedHat, editá `inventory/host_vars/<host>.yml`:
+```yaml
+ansible_os_family: RedHat
+firewall_engine: firewalld
+base_packages:
+  - vim
+  - curl
+  - wget
+  - git
+  - htop
+  # + epel-release, etc.
+```
 
-- Paquetes base del sistema (vim, curl, git, htop, etc.)
-- Docker y Docker Compose
-- Endurecimiento de seguridad (UFW, configuración SSH, fail2ban)
-- Herramientas de monitoreo (opcional)
-- MOTD personalizado
+**Qué cambia por distro:**
 
-## 🔐 Características de Seguridad
+| Componente | Debian | RedHat |
+|---|---|---|
+| Paquetes | `package` (apt) | `package` (dnf/yum) |
+| Docker | get.docker.com script | get.docker.com script |
+| Firewall | UFW | firewalld |
+| NTP | systemd-timesyncd | chronyd |
+| Auto-updates | unattended-upgrades | dnf-automatic |
+| Samba | smbd/nmbd | smb/nmb |
 
-- Endurecimiento SSH (sin acceso root, autenticación por clave)
-- Cortafuegos UFW configurado
-- Fail2ban para protección contra ataques de fuerza bruta
-- Actualizaciones de seguridad automáticas
-- Registro de auditoría
+## 🔑 Gestión de Secretos
+
+Varios servicios requieren secretos que **no están en el repositorio**. Pásalos con `--extra-vars`:
+
+```bash
+ansible-playbook playbooks/docker-services.yml \
+  --extra-vars 'cloudflare_tunnel_token=eyJ...' \
+  --extra-vars 'pihole_webpassword=tu-clave' \
+  --extra-vars 'ma_tours_db_password=pass-segura' \
+  --extra-vars 'portfolio_jwt_secret=openssl-rand-64' \
+  --extra-vars 'portfolio_invitation_code=uuid-v4'
+```
+
+> **Recomendación**: Usá `ansible-vault` para guardarlos de forma persistente:
+> ```bash
+> ansible-vault create group_vars/vault.yml
+> # Agregar: cloudflare_tunnel_token: "eyJ..."
+> # Luego: ansible-playbook ... --ask-vault-pass
+> ```
+
+## 📋 Roles del Sistema
+
+### `base` — Sistema base
+- Hostname, timezone (`America/Santo_Domingo`), locale
+- Paquetes base (vim, curl, git, htop, etc.)
+- Upgrades automáticos (`unattended-upgrades`)
+- Usuario `fsxserver` en grupos `sudo` + `docker`
+- Usuarios extra: `fsx_smb` (Samba), `devmon` (auto-mount)
+- Montura de disco externo (`/mnt/storage`, NTFS)
+- Límites del sistema (`nofile=65536`, `nproc=65536`)
+- sysctl tuning (`swappiness=10`, `somaxconn=65535`)
+
+### `security` — Hardening
+- SSH: solo pubkey, sin root, sin password, alive interval 300s
+- **UFW**: puertos TCP 22, 53, 80, 139, 445 + puertos UDP 53, 67, 123
+- **fail2ban**: 5 intentos, 1h de baneo
+- Servicios deshabilitados: bluetooth, cups
+
+### `samba` — Compartición de archivos
+- Instala `samba` y crea grupo/user `fsx_smb`
+- Share `Compartido` en `/srv/samba/compartido`
+- Protocolo mínimo SMB2
+- Configurable vía `samba_shares` en `group_vars/all.yml`
+
+### `docker` — Contenedores
+- Docker CE + `docker-buildx-plugin` + `docker-compose-plugin`
+- Red `fsxnet` (`172.20.0.0/16`)
+- Log rotation, prune automático 3 AM
+- `ctop` como monitor de contenedores
+- Daemon config: overlay2, live-restore, metrics en `127.0.0.1:9323`
+
+### `monitoring` — Monitoreo (opcional)
+- glances, iotop, nethogs
+- node_exporter para Prometheus (deshabilitado por defecto en mirtha)
+
+### `motd` — Banner
+- Banner FSXSYSTEM con hostname, uptime, RAM, disco, IP
+- Info de Docker si está instalado
+
+## 🐳 Servicios Docker
+
+### nginx + Cloudflare Tunnel
+| Contenedor | Imagen | Puertos |
+|---|---|---|
+| `nginx-proxy` | `nginx:alpine` | 80, 443 |
+| `cloudflared` | `cloudflare/cloudflared` | — (tunnel outbound) |
+
+- Reverse proxy para todas las apps del dominio
+- Cloudflare Tunnel como ingress (sin necesidad de abrir puertos WAN)
+- Dominios soportados: `portfolio.fsxsys.org`, `pihole.fsxsys.org`, `tours-api.fsxsys.org`, `reset-password.fsxsys.org`
+- SSL vía Let's Encrypt (certbot manual, certs montados desde `/etc/letsencrypt`)
+
+### Pi-hole
+| Contenedor | Imagen | Puertos |
+|---|---|---|
+| `pihole` | `pihole/pihole:2026.02.0` | 53 (DNS), 8053 (admin) |
+
+- DNS sinkhole para toda la red local
+- Admin UI en `pihole.fsxsys.org` con SSL vía nginx
+- DNS upstream: Cloudflare (1.1.1.1, 1.0.0.1)
+
+### MA Tours
+| Contenedor | Imagen | Puertos |
+|---|---|---|
+| `ma-tours-api-blue` | `ghcr.io/felix73sanchez/ma-tours-api` | 8081 |
+| `ma-tours-frontend` | `ghcr.io/felix73sanchez/ma-tours-frontend` | 3000 |
+| `ma-tours-db` | `postgres:16-alpine` | — (interno) |
+
+- API REST en `tours-api.fsxsys.org/api/`
+- Frontend en `reset-password.fsxsys.org`
+- Base de datos PostgreSQL con healthcheck
+
+### Portfolio FSX
+| Contenedor | Imagen | Puertos |
+|---|---|---|
+| `portfolio-fsx` | Build local (Next.js) | 7373 |
+
+- Aplicación personal construida desde Dockerfile
+- Admin con JWT + invitation code
+- Admin UI en `portfolio.fsxsys.org`
+
+### qBittorrent
+| Contenedor | Imagen | Puertos |
+|---|---|---|
+| `qbittorrent` | `lscr.io/linuxserver/qbittorrent` | 8073 (web), 6881 (torrent) |
+
+- WebUI en puerto 8073
+- Descargas en `/mnt/storage/data/torrents`
+- Timezone: `America/Santo_Domingo`
+
+## 🔐 Firewall (UFW)
+
+Puertos abiertos actualmente:
+
+| Puerto | Protocolo | Servicio |
+|---|---|---|
+| 22 | TCP | SSH |
+| 53 | TCP+UDP | DNS (Pi-hole) |
+| 67 | UDP | DHCP (Pi-hole) |
+| 80 | TCP | HTTP (nginx) |
+| 123 | UDP | NTP (Pi-hole) |
+| 139 | TCP | Samba NetBIOS |
+| 445 | TCP | Samba SMB |
+
+> Configurables en `group_vars/all.yml` → `firewall_allowed_tcp_ports` y `firewall_allowed_udp_ports`
 
 ## 📊 Monitoreo
 
-- Monitoreo del sistema con htop/glances
-- Monitoreo de contenedores Docker
-- Agregación de registros (opcional)
+```bash
+# Estado del sistema
+ssh fsxserver@10.0.0.73 htop
+
+# Contenedores
+ssh fsxserver@10.0.0.73 ctop
+
+# Logs de servicios
+ssh fsxserver@10.0.0.73 "docker logs nginx-proxy --tail 50"
+```
 
 ## 🛠️ Mantenimiento
 
 ```bash
-# Actualizar todos los sistemas
-ansible-playbook playbooks/update.yml
+# Actualizar todo
+make update
 
-# Verificar estado del sistema
-ansible homelab -m shell -a "df -h && free -h"
+# Actualizar solo paquetes (sin reboot)
+ansible-playbook playbooks/update.yml --tags upgrade
 
-# Reiniciar servicios
+# Reiniciar servicios Docker
 ansible-playbook playbooks/site.yml --tags docker --skip-tags install
+
+# Ver facts del sistema
+ansible mirtha -m setup | less
 ```
 
 ## 🔄 Agregar Nuevos Nodos
 
-1. Añadir host a `inventory/hosts.yml`
-2. Crear variables específicas del host en `inventory/host_vars/<hostname>.yml`
+1. Añadir host a `inventory/hosts.yml` en el grupo correspondiente
+2. Crear `inventory/host_vars/<hostname>.yml` con sus variables
 3. Ejecutar: `ansible-playbook playbooks/site.yml --limit <hostname>`
+4. Si aplica: `ansible-playbook playbooks/docker-services.yml --limit <hostname>`
 
 ## 📝 Notas
 
-- Todas las contraseñas almacenadas en Ansible Vault (encriptadas)
-- Playbooks idempotentes - seguros para ejecutar múltiples veces
-- Tareas etiquetadas para despliegue selectivo
-- Manejadores para reinicio de servicios solo cuando sea necesario
-
-## 🤝 Contribuir
-
-Documenta todos los cambios y prueba antes de desplegar en nodos de producción.
+- Playbooks **idempotentes** — seguros para ejecutar múltiples veces
+- Tareas etiquetadas para despliegue selectivo (`--tags`)
+- Manejadores para reinicio de servicios solo cuando es necesario
+- Secretos manejados vía `--extra-vars` o `ansible-vault`
 
 ## 📜 Licencia
 
-Este proyecto está licenciado bajo la **GNU General Public License v3.0** - Ver el archivo [LICENSE](LICENSE) para más detalles.
+GNU General Public License v3.0 — Ver [LICENSE](LICENSE) para más detalles.
 
-Esto significa que:
-- ✅ Puedes usar, modificar y distribuir este código libremente
-- ✅ Si lo usas comercialmente, debes compartir el código fuente
-- ✅ Las modificaciones también deben estar bajo GPL-3.0
-
-Autor: Felix Sanchez - FSX
-
+Autor: Felix Sanchez — FSX
 Software libre construido para aportar valor a la comunidad.

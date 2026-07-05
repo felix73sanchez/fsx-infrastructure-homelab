@@ -1,10 +1,10 @@
 ---
 # Host-specific variables for mirtha
 
-# Hardware specs
+# Hardware specs (real: 26GB LVM on 29GB mmcblk0)
 cpu_cores: 2
 memory_gb: 2
-disk_size_gb: 30
+disk_size_gb: 26
 
 # Network
 primary_interface: eth0
@@ -19,3 +19,29 @@ additional_packages:
   - ncdu
   - tree
   - tmux
+
+# Cloudflare Tunnel Token
+# Generate at: https://one.dash.cloudflare.com -> Networks -> Tunnels
+# Store encrypted with ansible-vault or pass via --extra-vars
+cloudflare_tunnel_token: ""
+
+# Docker compose apps to deploy (set false to skip specific apps)
+deploy_nginx_cloudflared: true
+deploy_pihole: true
+deploy_ma_tours: true
+deploy_portfolio: true
+deploy_qbittorrent: true
+
+# Pi-hole admin password (set via ansible-vault or --extra-vars)
+pihole_webpassword: ""
+
+# Application domains
+app_domains:
+  pihole: pihole.fsxsys.org
+  portfolio: portfolio.fsxsys.org
+  tours_api: tours-api.fsxsys.org
+  tours_frontend: reset-password.fsxsys.org
+
+# Let's Encrypt SSL
+ssl_email: ""  # Email for cert renewal
+ssl_domain: fsxsys.org

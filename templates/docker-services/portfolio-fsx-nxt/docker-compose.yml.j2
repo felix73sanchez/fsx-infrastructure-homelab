@@ -1,0 +1,19 @@
+services:
+  portfolio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SITE_URL=https://{{ app_domains.portfolio }}
+    container_name: portfolio-fsx
+    restart: always
+    ports:
+      - "7373:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SITE_URL=https://{{ app_domains.portfolio }}
+      - JWT_SECRET=${JWT_SECRET}
+      - INVITATION_CODE=${INVITATION_CODE}
+    volumes:
+      - ./data:/app/data
+      - ./public/uploads:/app/public/uploads

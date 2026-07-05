@@ -1,6 +1,7 @@
 ---
-# Security hardening tasks
+# Security hardening tasks (multi-distro)
 
+# ── SSH hardening (universal) ──
 - name: Configure SSH - Disable root login
   lineinfile:
     path: /etc/ssh/sshd_config
@@ -46,50 +47,125 @@
   notify: restart sshd
   tags: ['ssh']
 
-- name: Install UFW
-  apt:
+# ── Firewall: UFW (Debian) ──
+- name: UFW - Install
+  package:
     name: ufw
     state: present
-  when: enable_ufw | default(true)
+  when: firewall_engine == 'ufw'
   tags: ['firewall']
 
-- name: Configure UFW defaults
+- name: UFW - Default deny incoming
   ufw:
-    direction: "{{ item.direction }}"
-    policy: "{{ item.policy }}"
-  loop:
-    - { direction: 'incoming', policy: 'deny' }
-    - { direction: 'outgoing', policy: 'allow' }
-  when: enable_ufw | default(true)
+    direction: incoming
+    policy: deny
+  when: firewall_engine == 'ufw'
   tags: ['firewall']
 
-- name: Allow SSH through firewall
+- name: UFW - Default allow outgoing
+  ufw:
+    direction: outgoing
+    policy: allow
+  when: firewall_engine == 'ufw'
+  tags: ['firewall']
+
+- name: UFW - Allow SSH
   ufw:
     rule: allow
     port: "{{ ssh_port }}"
     proto: tcp
-  when: enable_ufw | default(true)
+  when: firewall_engine == 'ufw'
   tags: ['firewall']
 
-- name: Allow additional TCP ports
+- name: UFW - Allow TCP ports
   ufw:
     rule: allow
     port: "{{ item }}"
     proto: tcp
   loop: "{{ firewall_allowed_tcp_ports }}"
-  when: 
-    - enable_ufw | default(true)
+  when:
+    - firewall_engine == 'ufw'
     - firewall_allowed_tcp_ports is defined
   tags: ['firewall']
 
-- name: Enable UFW
+- name: UFW - Allow UDP ports
   ufw:
-    state: enabled
-  when: enable_ufw | default(true)
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+  loop: "{{ firewall_allowed_udp_ports }}"
+  when:
+    - firewall_engine == 'ufw'
+    - firewall_allowed_udp_ports is defined
   tags: ['firewall']
 
+- name: UFW - Enable
+  ufw:
+    state: enabled
+  when: firewall_engine == 'ufw'
+  tags: ['firewall']
+
+# ── Firewall: firewalld (RedHat) ──
+- name: firewalld - Install
+  package:
+    name: firewalld
+    state: present
+  when: firewall_engine == 'firewalld'
+  tags: ['firewall']
+
+- name: firewalld - Ensure running
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+  when: firewall_engine == 'firewalld'
+  tags: ['firewall']
+
+- name: firewalld - Set default zone to drop
+  command: firewall-cmd --set-default-zone=drop
+  when: firewall_engine == 'firewalld'
+  changed_when: false
+  tags: ['firewall']
+
+- name: firewalld - Allow SSH
+  firewalld:
+    service: ssh
+    zone: public
+    permanent: yes
+    state: enabled
+    immediate: yes
+  when: firewall_engine == 'firewalld'
+  tags: ['firewall']
+
+- name: firewalld - Allow TCP ports
+  firewalld:
+    port: "{{ item }}/tcp"
+    zone: public
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop: "{{ firewall_allowed_tcp_ports }}"
+  when:
+    - firewall_engine == 'firewalld'
+    - firewall_allowed_tcp_ports is defined
+  tags: ['firewall']
+
+- name: firewalld - Allow UDP ports
+  firewalld:
+    port: "{{ item }}/udp"
+    zone: public
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop: "{{ firewall_allowed_udp_ports }}"
+  when:
+    - firewall_engine == 'firewalld'
+    - firewall_allowed_udp_ports is defined
+  tags: ['firewall']
+
+# ── fail2ban (universal) ──
 - name: Install fail2ban
-  apt:
+  package:
     name: fail2ban
     state: present
   when: enable_fail2ban | default(true)
@@ -112,6 +188,7 @@
   when: enable_fail2ban | default(true)
   tags: ['fail2ban']
 
+# ── Service hardening (universal) ──
 - name: Disable unnecessary services
   service:
     name: "{{ item }}"
@@ -123,6 +200,7 @@
   ignore_errors: yes
   tags: ['services']
 
+# ── File permissions (universal) ──
 - name: Set secure permissions on sensitive files
   file:
     path: "{{ item }}"

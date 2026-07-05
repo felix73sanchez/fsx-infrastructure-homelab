@@ -18,7 +18,7 @@ ssh_password_authentication: "no"
 ssh_pubkey_authentication: "yes"
 
 # Security
-enable_ufw: true
+firewall_engine: ufw            # ufw (Debian) | firewalld (RedHat) | none
 enable_fail2ban: true
 fail2ban_maxretry: 5
 fail2ban_bantime: 3600
@@ -26,6 +26,14 @@ fail2ban_bantime: 3600
 # Default firewall rules
 firewall_allowed_tcp_ports:
   - 22    # SSH
+  - 53    # DNS (Pi-hole)
+  - 80    # HTTP (nginx)
+  - 139   # Samba NetBIOS
+  - 445   # Samba SMB
+firewall_allowed_udp_ports:
+  - 53    # DNS (Pi-hole)
+  - 67    # DHCP (Pi-hole)
+  - 123   # NTP (Pi-hole)
 
 # Automatic updates
 enable_unattended_upgrades: true
@@ -46,6 +54,9 @@ base_packages:
   - ca-certificates
   - gnupg
   - lsb-release
+  - samba
+  - ntfs-3g
+  - mergerfs
 
 # Docker defaults
 docker_install: true
@@ -59,6 +70,50 @@ monitoring_enabled: false
 
 # Logging
 log_retention_days: 30
+
+# Docker Compose version (for standalone binary)
+docker_compose_version: "2.27.0"
+
+# Samba Configuration
+samba_enabled: true
+samba_workgroup: WORKGROUP
+samba_server_string: "Servidor Samba"
+samba_min_protocol: SMB2
+samba_shares:
+  - name: Compartido
+    comment: "Carpeta para iPhone"
+    path: /srv/samba/compartido
+    browsable: yes
+    writable: yes
+    guest_ok: no
+    read_only: no
+    create_mask: "0755"
+    directory_mask: "0755"
+
+# Additional system users (non-admin)
+extra_users:
+  - username: fsx_smb
+    uid: 1003
+    group: fsx_smb
+    shell: /bin/bash
+    comment: "Felix Sanchez - Samba"
+    create_home: true
+  - username: devmon
+    uid: 300
+    shell: /bin/sh
+    comment: "Device monitor (auto-mount)"
+    create_home: true
+
+# Storage mounts
+storage_mounts:
+  - src: "UUID=8C681669681651F6"
+    path: /mnt/storage
+    fstype: ntfs-3g
+    opts: "defaults,nofail,uid=1000,gid=1000"
+    state: mounted
+
+# MergeFS (optional)
+mergerfs_install: false
 
 # MOTD Configuration
 motd_enabled: true

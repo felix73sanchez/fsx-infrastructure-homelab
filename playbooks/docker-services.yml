@@ -1,0 +1,194 @@
+---
+- name: Deploy Docker Compose Services
+  hosts: homelab
+  become: true
+
+  vars:
+    docker_apps_dir: "/opt/docker-apps"
+    compose_apps_base: "../templates/docker-services"
+
+  tasks:
+    - name: Create app directories
+      file:
+        path: "{{ docker_apps_dir }}/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - nginx
+        - pihole
+        - ma-tours
+        - portfolio-fsx-nxt
+        - qbittorrent
+      tags: ['setup']
+
+    # --- Nginx + Cloudflared ---
+    - name: Deploy nginx compose
+      template:
+        src: "{{ compose_apps_base }}/nginx/docker-compose.yml.j2"
+        dest: "{{ docker_apps_dir }}/nginx/docker-compose.yml"
+        mode: '0644'
+      when: deploy_nginx_cloudflared | default(false)
+      tags: ['nginx']
+
+    - name: Deploy nginx config
+      template:
+        src: "{{ compose_apps_base }}/nginx/nginx.conf.j2"
+        dest: "{{ docker_apps_dir }}/nginx/nginx.conf"
+        mode: '0644'
+      when: deploy_nginx_cloudflared | default(false)
+      tags: ['nginx']
+
+    - name: Deploy nginx env
+      template:
+        src: "{{ compose_apps_base }}/nginx/env.j2"
+        dest: "{{ docker_apps_dir }}/nginx/.env"
+        mode: '0600'
+      when:
+        - deploy_nginx_cloudflared | default(false)
+        - cloudflare_tunnel_token | default('') | length > 0
+      tags: ['nginx']
+
+    - name: Create nginx conf.d directory
+      file:
+        path: "{{ docker_apps_dir }}/nginx/conf.d"
+        state: directory
+        mode: '0755'
+      when: deploy_nginx_cloudflared | default(false)
+      tags: ['nginx']
+
+    - name: Deploy nginx virtual hosts
+      template:
+        src: "{{ compose_apps_base }}/nginx/conf.d/{{ item }}.j2"
+        dest: "{{ docker_apps_dir }}/nginx/conf.d/{{ item }}"
+        mode: '0644'
+      loop:
+        - default.conf
+        - ma-tours-api.conf
+        - pihole.conf
+        - portfolio.conf
+      when: deploy_nginx_cloudflared | default(false)
+      tags: ['nginx']
+
+    - name: Create nginx logs directory
+      file:
+        path: "{{ docker_apps_dir }}/nginx/logs"
+        state: directory
+        mode: '0755'
+      when: deploy_nginx_cloudflared | default(false)
+      tags: ['nginx']
+
+    # --- Pi-hole ---
+    - name: Deploy Pi-hole compose
+      template:
+        src: "{{ compose_apps_base }}/pihole/docker-compose.yml.j2"
+        dest: "{{ docker_apps_dir }}/pihole/docker-compose.yml"
+        mode: '0644'
+      when: deploy_pihole | default(false)
+      tags: ['pihole']
+
+    - name: Create Pi-hole data directories
+      file:
+        path: "{{ docker_apps_dir }}/pihole/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - etc-pihole
+        - etc-dnsmasq.d
+      when: deploy_pihole | default(false)
+      tags: ['pihole']
+
+    # --- MA Tours ---
+    - name: Deploy MA Tours compose
+      template:
+        src: "{{ compose_apps_base }}/ma-tours/docker-compose.yml.j2"
+        dest: "{{ docker_apps_dir }}/ma-tours/docker-compose.yml"
+        mode: '0644'
+      when: deploy_ma_tours | default(false)
+      tags: ['ma-tours']
+
+    - name: Deploy MA Tours env
+      template:
+        src: "{{ compose_apps_base }}/ma-tours/env.j2"
+        dest: "{{ docker_apps_dir }}/ma-tours/.env"
+        mode: '0600'
+      when:
+        - deploy_ma_tours | default(false)
+        - ma_tours_db_password | default('') | length > 0
+      tags: ['ma-tours']
+
+    # --- Portfolio ---
+    - name: Deploy Portfolio compose
+      template:
+        src: "{{ compose_apps_base }}/portfolio-fsx-nxt/docker-compose.yml.j2"
+        dest: "{{ docker_apps_dir }}/portfolio-fsx-nxt/docker-compose.yml"
+        mode: '0644'
+      when: deploy_portfolio | default(false)
+      tags: ['portfolio']
+
+    - name: Deploy Portfolio env
+      template:
+        src: "{{ compose_apps_base }}/portfolio-fsx-nxt/env.j2"
+        dest: "{{ docker_apps_dir }}/portfolio-fsx-nxt/.env"
+        mode: '0600'
+      when:
+        - deploy_portfolio | default(false)
+        - portfolio_jwt_secret | default('') | length > 0
+      tags: ['portfolio']
+
+    # --- qBittorrent ---
+    - name: Deploy qBittorrent compose
+      template:
+        src: "{{ compose_apps_base }}/qbittorrent/docker-compose.yml.j2"
+        dest: "{{ docker_apps_dir }}/qbittorrent/docker-compose.yml"
+        mode: '0644'
+      when: deploy_qbittorrent | default(false)
+      tags: ['qbittorrent']
+
+    - name: Create qBittorrent config directory
+      file:
+        path: "{{ docker_apps_dir }}/qbittorrent/config"
+        state: directory
+        mode: '0755'
+      when: deploy_qbittorrent | default(false)
+      tags: ['qbittorrent']
+
+    # --- Start all compose apps ---
+    - name: Start nginx + Cloudflare Tunnel
+      community.docker.docker_compose_v2:
+        project_src: "{{ docker_apps_dir }}/nginx"
+        state: present
+        pull: always
+      when: deploy_nginx_cloudflared | default(false)
+      tags: ['start', 'nginx']
+
+    - name: Start Pi-hole
+      community.docker.docker_compose_v2:
+        project_src: "{{ docker_apps_dir }}/pihole"
+        state: present
+        pull: always
+      when: deploy_pihole | default(false)
+      tags: ['start', 'pihole']
+
+    - name: Start MA Tours
+      community.docker.docker_compose_v2:
+        project_src: "{{ docker_apps_dir }}/ma-tours"
+        state: present
+        pull: always
+      when: deploy_ma_tours | default(false)
+      tags: ['start', 'ma-tours']
+
+    - name: Start Portfolio
+      community.docker.docker_compose_v2:
+        project_src: "{{ docker_apps_dir }}/portfolio-fsx-nxt"
+        state: present
+        pull: always
+      when: deploy_portfolio | default(false)
+      tags: ['start', 'portfolio']
+
+    - name: Start qBittorrent
+      community.docker.docker_compose_v2:
+        project_src: "{{ docker_apps_dir }}/qbittorrent"
+        state: present
+        pull: always
+      when: deploy_qbittorrent | default(false)
+      tags: ['start', 'qbittorrent']

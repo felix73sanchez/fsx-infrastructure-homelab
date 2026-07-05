@@ -33,3 +33,6 @@ Thumbs.db
 *.tmp
 *.bak
 *.orig
+
+# OpenCode / Atl
+.atl/

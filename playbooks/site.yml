@@ -28,6 +28,10 @@
     - role: security
       tags: ['security', 'hardening']
       
+    - role: samba
+      tags: ['samba', 'filesharing']
+      when: samba_enabled | default(false)
+      
     - role: docker
       tags: ['docker', 'containers']
       when: docker_install | default(true)

@@ -1,0 +1,45 @@
+services:
+  ma-tours-db:
+    image: postgres:16-alpine
+    container_name: ma-tours-db
+    environment:
+      POSTGRES_DB: ma_tours
+      POSTGRES_USER: ma_tours
+      POSTGRES_PASSWORD: ${MA_TOURS_DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ma_tours"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  ma-tours-api:
+    image: ghcr.io/felix73sanchez/ma-tours-api:latest
+    container_name: ma-tours-api-blue
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ma-tours-db:5432/ma_tours
+      SPRING_DATASOURCE_USERNAME: ma_tours
+      SPRING_DATASOURCE_PASSWORD: ${MA_TOURS_DB_PASSWORD}
+      ALLOWED_ORIGINS: https://{{ app_domains.tours_frontend | default('reset-password.fsxsys.org') }}
+    depends_on:
+      ma-tours-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ma-tours-frontend:
+    image: ghcr.io/felix73sanchez/ma-tours-frontend:latest
+    container_name: ma-tours-frontend
+    ports:
+      - "3000:80"
+    environment:
+      VITE_API_URL: https://{{ app_domains.tours_api | default('tours-api.fsxsys.org') }}/api
+    depends_on:
+      - ma-tours-api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

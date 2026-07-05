@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+
+[global]
+    workgroup = {{ samba_workgroup }}
+    server string = {{ samba_server_string }}
+    vfs objects = streams_xattr
+    min protocol = {{ samba_min_protocol }}
+    log file = /var/log/samba/log.%m
+    max log size = 1000
+
+{% for share in samba_shares %}
+[{{ share.name }}]
+    comment = {{ share.comment }}
+    path = {{ share.path }}
+    browsable = {{ share.browsable | default('yes') }}
+    writable = {{ share.writable | default('yes') }}
+    guest ok = {{ share.guest_ok | default('no') }}
+    read only = {{ share.read_only | default('no') }}
+    create mask = {{ share.create_mask | default('0755') }}
+    directory mask = {{ share.directory_mask | default('0755') }}
+
+{% endfor %}

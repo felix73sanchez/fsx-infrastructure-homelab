@@ -49,9 +49,10 @@ echo "What would you like to do?"
 echo "1) Full deployment (all hosts)"
 echo "2) Deploy to specific host"
 echo "3) Update systems only"
-echo "4) Deploy Docker applications"
-echo "5) Run syntax check"
-echo "6) Exit"
+echo "4) Deploy Docker applications (Portainer/Watchtower)"
+echo "5) Deploy Docker services (nginx, pihole, ma-tours, portfolio, qbittorrent)"
+echo "6) Run syntax check"
+echo "7) Exit"
 echo ""
 read -p "Enter your choice [1-6]: " choice
 
@@ -70,15 +71,19 @@ case $choice in
         ansible-playbook playbooks/update.yml
         ;;
     4)
-        echo -e "${YELLOW}Deploying Docker applications...${NC}"
+        echo -e "${YELLOW}Deploying Docker applications (Portainer/Watchtower)...${NC}"
         ansible-playbook playbooks/docker-apps.yml
         ;;
     5)
+        echo -e "${YELLOW}Deploying Docker services (nginx, pihole, etc.)...${NC}"
+        ansible-playbook playbooks/docker-services.yml
+        ;;
+    6)
         echo -e "${YELLOW}Running syntax check...${NC}"
         ansible-playbook playbooks/site.yml --syntax-check
         echo -e "${GREEN}✓ Syntax check passed${NC}"
         ;;
-    6)
+    7)
         echo -e "${GREEN}Exiting...${NC}"
         exit 0
         ;;

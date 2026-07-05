@@ -1,0 +1,66 @@
+---
+# Samba server configuration (multi-distro)
+
+- name: Install Samba packages
+  package:
+    name: "{{ samba_packages | default(['samba']) }}"
+    state: present
+  tags: ['install']
+
+- name: Create Samba group
+  group:
+    name: fsx_smb
+    state: present
+  tags: ['config']
+
+- name: Create Samba user
+  user:
+    name: fsx_smb
+    uid: 1003
+    group: fsx_smb
+    shell: /bin/bash
+    comment: "Felix Sanchez - Samba"
+    create_home: yes
+    home: /home/fsx_smb
+    state: present
+  tags: ['users']
+
+- name: Create share directories
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: fsx_smb
+    group: fsx_smb
+    mode: "0755"
+  loop: "{{ samba_shares }}"
+  tags: ['directories']
+
+- name: Configure smb.conf
+  template:
+    src: smb.conf.j2
+    dest: /etc/samba/smb.conf
+    mode: '0644'
+  notify: restart smbd
+  tags: ['config']
+
+- name: Enable and start Samba services (Debian)
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - smbd
+    - nmbd
+  when: ansible_os_family == 'Debian'
+  tags: ['service']
+
+- name: Enable and start Samba services (RedHat)
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - smb
+    - nmb
+  when: ansible_os_family == 'RedHat'
+  tags: ['service']
